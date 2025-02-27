@@ -262,6 +262,7 @@
         
         <div class="info-box">
             <p>To use this tool, you'll need your own Hypixel API key. Get yours by logging into mc.hypixel.net and using the command <strong>/api new</strong></p>
+            <p><strong>Troubleshooting:</strong> If you're having issues, open your browser's console (F12 or Ctrl+Shift+J) to see detailed error messages.</p>
         </div>
         
         <div class="input-section">
@@ -391,30 +392,65 @@
                 loading.style.display = 'block';
                 
                 try {
+                    console.log("Starting analysis for username:", username);
+                    console.log("API Key (first 5 chars):", apiKey.substring(0, 5) + "...");
+                    
                     // Step 1: Get the player's UUID from Mojang API
                     const uuid = await fetchPlayerUUID(username);
+                    console.log("UUID result:", uuid);
+                    
                     if (!uuid) {
-                        showError(`Could not find player "${username}". Please check the spelling.`);
+                        showError(`Could not find player "${username}". Please check the spelling or try again later.`);
                         loading.style.display = 'none';
                         return;
                     }
                     
                     // Step 2: Get the player data from Hypixel API
                     const playerData = await fetchHypixelPlayer(uuid, apiKey);
-                    if (!playerData || !playerData.success) {
-                        if (playerData && playerData.cause === 'Invalid API key') {
-                            showError('Invalid Hypixel API key. Get a new one with "/api new" on the Hypixel server.');
+                    if (!playerData) {
+                        showError('Failed to retrieve player data from Hypixel API. Check browser console for details.');
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (!playerData.success) {
+                        if (playerData.cause === 'Invalid API key') {
+                            showError(`Invalid Hypixel API key. Get a new one with "/api new" on the Hypixel server.<br><br>Error: ${playerData.cause}`);
+                        } else if (playerData.cause) {
+                            showError(`Hypixel API error: ${playerData.cause}`);
                         } else {
-                            showError('Error fetching player data from Hypixel API. The player might not have played on Hypixel before.');
+                            showError('Unknown error fetching player data from Hypixel API. The player might not have played on Hypixel before.');
                         }
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (!playerData.player) {
+                        showError(`Player with UUID ${uuid} has never played on Hypixel.`);
                         loading.style.display = 'none';
                         return;
                     }
                     
                     // Step 3: Get SkyBlock profiles
                     const profilesData = await fetchSkyblockProfiles(uuid, apiKey);
-                    if (!profilesData || !profilesData.success || !profilesData.profiles || profilesData.profiles.length === 0) {
-                        showError('This player does not have any SkyBlock profiles.');
+                    if (!profilesData) {
+                        showError('Failed to retrieve SkyBlock profiles. Check browser console for details.');
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (!profilesData.success) {
+                        if (profilesData.cause) {
+                            showError(`SkyBlock API error: ${profilesData.cause}`);
+                        } else {
+                            showError('Unknown error fetching SkyBlock profiles.');
+                        }
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    if (!profilesData.profiles || profilesData.profiles.length === 0) {
+                        showError(`This player (${username}) does not have any SkyBlock profiles.`);
                         loading.style.display = 'none';
                         return;
                     }
@@ -460,11 +496,38 @@
             
             async function fetchPlayerUUID(username) {
                 try {
-                    const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
-                    if (!response.ok) return null;
+                    console.log(`Fetching UUID for username: ${username}`);
+                    // Try without CORS proxy first, then fall back to proxy if needed
+                    let response;
+                    try {
+                        response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
+                    } catch (e) {
+                        console.log("Direct request failed, trying with CORS proxy");
+                        const corsProxy = 'https://corsproxy.io/?';
+                        response = await fetch(`${corsProxy}https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
+                    }
                     
-                    const data = await response.json();
-                    return data.id;
+                    console.log("Mojang API response status:", response.status);
+                    
+                    if (!response.ok) {
+                        console.log(`Mojang API returned status: ${response.status}`);
+                        if (response.status === 404) {
+                            console.log(`Player "${username}" not found in Mojang database`);
+                        }
+                        return null;
+                    }
+                    
+                    const text = await response.text();
+                    console.log("Mojang API response text:", text);
+                    
+                    try {
+                        const data = JSON.parse(text);
+                        console.log("Parsed UUID:", data.id);
+                        return data.id;
+                    } catch (e) {
+                        console.error("Error parsing JSON from Mojang API:", e);
+                        return null;
+                    }
                 } catch (error) {
                     console.error('Error fetching UUID:', error);
                     return null;
@@ -473,13 +536,42 @@
             
             async function fetchHypixelPlayer(uuid, apiKey) {
                 try {
-                    const response = await fetch(`https://api.hypixel.net/player?uuid=${uuid}`, {
-                        headers: {
-                            'API-Key': apiKey
-                        }
-                    });
+                    console.log(`Fetching Hypixel player data for UUID: ${uuid}`);
                     
-                    return await response.json();
+                    // Try without CORS proxy first, then fall back to proxy if needed
+                    let response;
+                    try {
+                        response = await fetch(`https://api.hypixel.net/player?uuid=${uuid}`, {
+                            headers: {
+                                'API-Key': apiKey
+                            }
+                        });
+                    } catch (e) {
+                        console.log("Direct Hypixel request failed, trying with CORS proxy");
+                        const corsProxy = 'https://corsproxy.io/?';
+                        response = await fetch(`${corsProxy}https://api.hypixel.net/player?uuid=${uuid}`, {
+                            headers: {
+                                'API-Key': apiKey
+                            }
+                        });
+                    }
+                    
+                    console.log("Hypixel API response status:", response.status);
+                    
+                    const text = await response.text();
+                    console.log("Hypixel API response preview:", text.substring(0, 200) + "...");
+                    
+                    try {
+                        const data = JSON.parse(text);
+                        console.log("Hypixel API success:", data.success);
+                        if (!data.success) {
+                            console.log("Hypixel API error cause:", data.cause);
+                        }
+                        return data;
+                    } catch (e) {
+                        console.error("Error parsing JSON from Hypixel API:", e);
+                        return null;
+                    }
                 } catch (error) {
                     console.error('Error fetching player data:', error);
                     return null;
@@ -488,13 +580,44 @@
             
             async function fetchSkyblockProfiles(uuid, apiKey) {
                 try {
-                    const response = await fetch(`https://api.hypixel.net/skyblock/profiles?uuid=${uuid}`, {
-                        headers: {
-                            'API-Key': apiKey
-                        }
-                    });
+                    console.log(`Fetching SkyBlock profiles for UUID: ${uuid}`);
                     
-                    return await response.json();
+                    // Try without CORS proxy first, then fall back to proxy if needed
+                    let response;
+                    try {
+                        response = await fetch(`https://api.hypixel.net/skyblock/profiles?uuid=${uuid}`, {
+                            headers: {
+                                'API-Key': apiKey
+                            }
+                        });
+                    } catch (e) {
+                        console.log("Direct SkyBlock request failed, trying with CORS proxy");
+                        const corsProxy = 'https://corsproxy.io/?';
+                        response = await fetch(`${corsProxy}https://api.hypixel.net/skyblock/profiles?uuid=${uuid}`, {
+                            headers: {
+                                'API-Key': apiKey
+                            }
+                        });
+                    }
+                    
+                    console.log("SkyBlock API response status:", response.status);
+                    
+                    const text = await response.text();
+                    console.log("SkyBlock API response preview:", text.substring(0, 200) + "...");
+                    
+                    try {
+                        const data = JSON.parse(text);
+                        console.log("SkyBlock API success:", data.success);
+                        if (data.success) {
+                            console.log("Number of profiles found:", data.profiles ? data.profiles.length : 0);
+                        } else {
+                            console.log("SkyBlock API error cause:", data.cause);
+                        }
+                        return data;
+                    } catch (e) {
+                        console.error("Error parsing JSON from SkyBlock API:", e);
+                        return null;
+                    }
                 } catch (error) {
                     console.error('Error fetching SkyBlock profiles:', error);
                     return null;
@@ -887,12 +1010,14 @@
             }
             
             function showError(message) {
-                errorMessage.textContent = message;
+                errorMessage.innerHTML = message;
                 errorMessage.style.display = 'block';
+                console.error("Error displayed:", message);
+                loading.style.display = 'none';
             }
             
             function hideError() {
-                errorMessage.textContent = '';
+                errorMessage.innerHTML = '';
                 errorMessage.style.display = 'none';
             }
             
