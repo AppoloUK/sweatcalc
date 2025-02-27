@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypixel Skyblock Sweat Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #ffaa00;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .api-key-section {
+            display: flex;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 15px;
+        }
+
+        .username-section {
+            display: flex;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #555;
+            background-color: #333;
+            color: #fff;
+            border-radius: 4px;
+            flex-grow: 1;
+        }
+
+        .username-section input {
+            border-radius: 4px 0 0 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #5e35b1;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #analyze-btn {
+            border-radius: 0 4px 4px 0;
+        }
+
+        button:hover {
+            background-color: #7e57c2;
+        }
+
+        .help-text {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .results {
+            background-color: #383838;
+            padding: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .sweat-meter {
+            height: 40px;
+            background-color: #444;
+            border-radius: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sweat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336);
+            width: 0%;
+            transition: width 1s ease-in-out;
+            border-radius: 20px;
+        }
+
+        .sweat-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .profile-selection {
+            margin: 15px 0;
+            display: none;
+        }
+
+        .profile-selection select {
+            padding: 8px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background-color: #444;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-title {
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #7e57c2;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+            padding: 10px;
+            background-color: rgba(255, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background-color: rgba(93, 64, 196, 0.2);
+            border-left: 4px solid #5e35b1;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* Skills tab display */
+        .tabs {
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .tab-buttons {
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background-color: #444;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 15px;
+            margin-right: 2px;
+            transition: 0.3s;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .tab-button:hover {
+            background-color: #555;
+        }
+
+        .tab-button.active {
+            background-color: #5e35b1;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            background-color: #383838;
+            border-top: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hypixel Skyblock Sweat Calculator</h1>
+        
+        <div class="info-box">
+            <p>To use this tool, you'll need your own Hypixel API key. Get yours by logging into mc.hypixel.net and using the command <strong>/api new</strong></p>
+        </div>
+        
+        <div class="input-section">
+            <div class="api-key-section">
+                <input type="text" id="api-key" placeholder="Enter your Hypixel API Key">
+            </div>
+            <div class="help-text">Your API key is stored locally in your browser and never sent to our servers.</div>
+            
+            <div class="username-section">
+                <input type="text" id="username" placeholder="Enter Minecraft Username">
+                <button id="analyze-btn">Analyze</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading player data...</p>
+        </div>
+        
+        <div class="error-message" id="error-message"></div>
+        
+        <div class="profile-selection" id="profile-selection">
+            <label for="profile-select">Select Skyblock Profile:</label>
+            <select id="profile-select"></select>
+        </div>
+        
+        <div class="results" id="results">
+            <h2 id="player-name">Player: </h2>
+            <div class="sweat-meter">
+                <div class="sweat-fill" id="sweat-fill"></div>
+                <div class="sweat-percentage" id="sweat-percentage"></div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="openTab(event, 'skills-tab')">Skills</button>
+                    <button class="tab-button" onclick="openTab(event, 'slayer-tab')">Slayer</button>
+                    <button class="tab-button" onclick="openTab(event, 'dungeons-tab')">Dungeons</button>
+                    <button class="tab-button" onclick="openTab(event, 'misc-tab')">Misc</button>
+                </div>
+                
+                <div id="skills-tab" class="tab-content active">
+                    <div class="stats-container" id="skills-container"></div>
+                </div>
+                
+                <div id="slayer-tab" class="tab-content">
+                    <div class="stats-container" id="slayer-container"></div>
+                </div>
+                
+                <div id="dungeons-tab" class="tab-content">
+                    <div class="stats-container" id="dungeons-container"></div>
+                </div>
+                
+                <div id="misc-tab" class="tab-content">
+                    <div class="stats-container" id="misc-container"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Note: This tool uses the public Hypixel API and is not affiliated with Hypixel or Minecraft.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiKeyInput = document.getElementById('api-key');
+            const usernameInput = document.getElementById('username');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorMessage = document.getElementById('error-message');
+            const playerName = document.getElementById('player-name');
+            const sweatFill = document.getElementById('sweat-fill');
+            const sweatPercentage = document.getElementById('sweat-percentage');
+            const profileSelect = document.getElementById('profile-select');
+            const profileSelection = document.getElementById('profile-selection');
+            
+            const skillsContainer = document.getElementById('skills-container');
+            const slayerContainer = document.getElementById('slayer-container');
+            const dungeonsContainer = document.getElementById('dungeons-container');
+            const miscContainer = document.getElementById('misc-container');
+            
+            // Check for saved API key in local storage
+            const savedApiKey = localStorage.getItem('hypixel_api_key');
+            if (savedApiKey) {
+                apiKeyInput.value = savedApiKey;
+            }
+            
+            // Tab functionality
+            window.openTab = function(evt, tabName) {
+                const tabcontent = document.getElementsByClassName("tab-content");
+                for (let i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].className = tabcontent[i].className.replace(" active", "");
+                }
+                
+                const tablinks = document.getElementsByClassName("tab-button");
+                for (let i = 0; i < tablinks.length; i++) {
+                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                }
+                
+                document.getElementById(tabName).className += " active";
+                evt.currentTarget.className += " active";
+            };
+            
+            analyzeBtn.addEventListener('click', async function() {
+                const apiKey = apiKeyInput.value.trim();
+                const username = usernameInput.value.trim();
+                
+                if (!apiKey) {
+                    showError('Please enter a Hypixel API key. You can get one by logging into mc.hypixel.net and typing "/api new"');
+                    return;
+                }
+                
+                if (!username) {
+                    showError('Please enter a Minecraft username');
+                    return;
+                }
+                
+                // Save API key to local storage
+                localStorage.setItem('hypixel_api_key', apiKey);
+                
+                // Reset and show loading
+                hideError();
+                results.style.display = 'none';
+                profileSelection.style.display = 'none';
+                loading.style.display = 'block';
+                
+                try {
+                    // Step 1: Get the player's UUID from Mojang API
+                    const uuid = await fetchPlayerUUID(username);
+                    if (!uuid) {
+                        showError(`Could not find player "${username}". Please check the spelling.`);
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Step 2: Get the player data from Hypixel API
+                    const playerData = await fetchHypixelPlayer(uuid, apiKey);
+                    if (!playerData || !playerData.success) {
+                        if (playerData && playerData.cause === 'Invalid API key') {
+                            showError('Invalid Hypixel API key. Get a new one with "/api new" on the Hypixel server.');
+                        } else {
+                            showError('Error fetching player data from Hypixel API. The player might not have played on Hypixel before.');
+                        }
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Step 3: Get SkyBlock profiles
+                    const profilesData = await fetchSkyblockProfiles(uuid, apiKey);
+                    if (!profilesData || !profilesData.success || !profilesData.profiles || profilesData.profiles.length === 0) {
+                        showError('This player does not have any SkyBlock profiles.');
+                        loading.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Add profiles to dropdown
+                    profileSelect.innerHTML = '';
+                    const sortedProfiles = profilesData.profiles.sort((a, b) => {
+                        // Sort by last save date to show most recently used profiles first
+                        return b.members[uuid].last_save - a.members[uuid].last_save;
+                    });
+                    
+                    sortedProfiles.forEach(profile => {
+                        const option = document.createElement('option');
+                        option.value = profile.profile_id;
+                        option.textContent = profile.cute_name || profile.profile_id;
+                        profileSelect.appendChild(option);
+                    });
+                    
+                    // Show the profile selection dropdown
+                    profileSelection.style.display = 'block';
+                    loading.style.display = 'none';
+                    
+                    // Add event listener to the profile select dropdown
+                    profileSelect.onchange = function() {
+                        loading.style.display = 'block';
+                        const selectedProfileId = profileSelect.value;
+                        const selectedProfile = profilesData.profiles.find(p => p.profile_id === selectedProfileId);
+                        
+                        if (selectedProfile) {
+                            processProfileData(username, uuid, selectedProfile, playerData.player);
+                        }
+                    };
+                    
+                    // Automatically select the first profile
+                    profileSelect.dispatchEvent(new Event('change'));
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('An error occurred. Please check your API key and try again.');
+                    loading.style.display = 'none';
+                }
+            });
+            
+            async function fetchPlayerUUID(username) {
+                try {
+                    const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
+                    if (!response.ok) return null;
+                    
+                    const data = await response.json();
+                    return data.id;
+                } catch (error) {
+                    console.error('Error fetching UUID:', error);
+                    return null;
+                }
+            }
+            
+            async function fetchHypixelPlayer(uuid, apiKey) {
+                try {
+                    const response = await fetch(`https://api.hypixel.net/player?uuid=${uuid}`, {
+                        headers: {
+                            'API-Key': apiKey
+                        }
+                    });
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching player data:', error);
+                    return null;
+                }
+            }
+            
+            async function fetchSkyblockProfiles(uuid, apiKey) {
+                try {
+                    const response = await fetch(`https://api.hypixel.net/skyblock/profiles?uuid=${uuid}`, {
+                        headers: {
+                            'API-Key': apiKey
+                        }
+                    });
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching SkyBlock profiles:', error);
+                    return null;
+                }
+            }
+            
+            function processProfileData(username, uuid, profileData, playerData) {
+                // Get member data for the profile
+                const memberData = profileData.members[uuid];
+                
+                // Extract stats
+                const extractedData = extractSkyblockStats(memberData, profileData, playerData);
+                
+                // Calculate sweat score
+                const sweatScore = calculateSweatScore(extractedData);
+                
+                // Update UI
+                displayResults(username, extractedData, sweatScore);
+                
+                // Hide loading
+                loading.style.display = 'none';
+            }
+            
+            function extractSkyblockStats(memberData, profileData, playerData) {
+                // Initialize extracted data structure
+                const data = {
+                    skills: {
+                        combat: 0,
+                        mining: 0,
+                        farming: 0,
+                        fishing: 0,
+                        foraging: 0,
+                        enchanting: 0,
+                        alchemy: 0,
+                        taming: 0,
+                        carpentry: 0,
+                        runecrafting: 0
+                    },
+                    slayer: {
+                        zombie: 0,
+                        spider: 0,
+                        wolf: 0,
+                        enderman: 0,
+                        blaze: 0,
+                        vampire: 0
+                    },
+                    dungeons: {
+                        catacombs: 0,
+                        healer: 0,
+                        mage: 0,
+                        berserk: 0,
+                        archer: 0,
+                        tank: 0,
+                        secrets: 0,
+                        completions: {}
+                    },
+                    networth: 0,
+                    playtime: 0,
+                    achievements: 0,
+                    bank: 0,
+                    purse: 0,
+                    minions: 0,
+                    pets: []
+                };
+                
+                // Extract skill levels
+                try {
+                    // Check for skills API access
+                    if (memberData.experience_skill_combat !== undefined) {
+                        // If skills API is available
+                        data.skills.combat = skillExperienceToLevel(memberData.experience_skill_combat, 'combat');
+                        data.skills.mining = skillExperienceToLevel(memberData.experience_skill_mining, 'mining');
+                        data.skills.farming = skillExperienceToLevel(memberData.experience_skill_farming, 'farming');
+                        data.skills.fishing = skillExperienceToLevel(memberData.experience_skill_fishing, 'fishing');
+                        data.skills.foraging = skillExperienceToLevel(memberData.experience_skill_foraging, 'foraging');
+                        data.skills.enchanting = skillExperienceToLevel(memberData.experience_skill_enchanting, 'enchanting');
+                        data.skills.alchemy = skillExperienceToLevel(memberData.experience_skill_alchemy, 'alchemy');
+                        data.skills.taming = skillExperienceToLevel(memberData.experience_skill_taming, 'taming');
+                        
+                        if (memberData.experience_skill_carpentry !== undefined) {
+                            data.skills.carpentry = skillExperienceToLevel(memberData.experience_skill_carpentry, 'carpentry');
+                        }
+                        
+                        if (memberData.experience_skill_runecrafting !== undefined) {
+                            data.skills.runecrafting = skillExperienceToLevel(memberData.experience_skill_runecrafting, 'runecrafting');
+                        }
+                    } else {
+                        // If skills API is not available, use default values
+                        console.log("Skills API not enabled for this player");
+                    }
+                } catch (e) {
+                    console.error("Error extracting skills:", e);
+                }
+                
+                // Extract slayer data
+                try {
+                    if (memberData.slayer_bosses) {
+                        if (memberData.slayer_bosses.zombie) {
+                            data.slayer.zombie = calculateSlayerLevel(memberData.slayer_bosses.zombie.xp || 0);
+                        }
+                        if (memberData.slayer_bosses.spider) {
+                            data.slayer.spider = calculateSlayerLevel(memberData.slayer_bosses.spider.xp || 0);
+                        }
+                        if (memberData.slayer_bosses.wolf) {
+                            data.slayer.wolf = calculateSlayerLevel(memberData.slayer_bosses.wolf.xp || 0);
+                        }
+                        if (memberData.slayer_bosses.enderman) {
+                            data.slayer.enderman = calculateSlayerLevel(memberData.slayer_bosses.enderman.xp || 0);
+                        }
+                        if (memberData.slayer_bosses.blaze) {
+                            data.slayer.blaze = calculateSlayerLevel(memberData.slayer_bosses.blaze.xp || 0);
+                        }
+                        if (memberData.slayer_bosses.vampire) {
+                            data.slayer.vampire = calculateSlayerLevel(memberData.slayer_bosses.vampire.xp || 0);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error extracting slayer data:", e);
+                }
+                
+                // Extract dungeons data
+                try {
+                    if (memberData.dungeons && memberData.dungeons.dungeon_types && memberData.dungeons.dungeon_types.catacombs) {
+                        // Extract catacombs level
+                        const catacombsExp = memberData.dungeons.dungeon_types.catacombs.experience || 0;
+                        data.dungeons.catacombs = calculateDungeonLevel(catacombsExp);
+                        
+                        // Extract class levels
+                        if (memberData.dungeons.player_classes) {
+                            if (memberData.dungeons.player_classes.healer) {
+                                data.dungeons.healer = calculateDungeonLevel(memberData.dungeons.player_classes.healer.experience || 0);
+                            }
+                            if (memberData.dungeons.player_classes.mage) {
+                                data.dungeons.mage = calculateDungeonLevel(memberData.dungeons.player_classes.mage.experience || 0);
+                            }
+                            if (memberData.dungeons.player_classes.berserk) {
+                                data.dungeons.berserk = calculateDungeonLevel(memberData.dungeons.player_classes.berserk.experience || 0);
+                            }
+                            if (memberData.dungeons.player_classes.archer) {
+                                data.dungeons.archer = calculateDungeonLevel(memberData.dungeons.player_classes.archer.experience || 0);
+                            }
+                            if (memberData.dungeons.player_classes.tank) {
+                                data.dungeons.tank = calculateDungeonLevel(memberData.dungeons.player_classes.tank.experience || 0);
+                            }
+                        }
+                        
+                        // Extract completions
+                        if (memberData.dungeons.dungeon_types.catacombs.tier_completions) {
+                            data.dungeons.completions = memberData.dungeons.dungeon_types.catacombs.tier_completions;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error extracting dungeons data:", e);
+                }
+                
+                // Extract secrets found
+                try {
+                    if (playerData.achievements && playerData.achievements.skyblock_treasure_hunter) {
+                        data.dungeons.secrets = playerData.achievements.skyblock_treasure_hunter;
+                    }
+                } catch (e) {
+                    console.error("Error extracting secrets:", e);
+                }
+                
+                // Extract coins from purse
+                try {
+                    if (memberData.coin_purse) {
+                        data.purse = Math.floor(memberData.coin_purse);
+                    }
+                } catch (e) {
+                    console.error("Error extracting purse:", e);
+                }
+                
+                // Extract bank balance
+                try {
+                    if (profileData.banking && profileData.banking.balance) {
+                        data.bank = Math.floor(profileData.banking.balance);
+                    }
+                } catch (e) {
+                    console.error("Error extracting bank balance:", e);
+                }
+                
+                // Extract pets
+                try {
+                    if (memberData.pets) {
+                        data.pets = memberData.pets.map(pet => ({
+                            name: pet.type,
+                            level: calculatePetLevel(pet.exp, pet.tier.toLowerCase()),
+                            rarity: pet.tier
+                        })).sort((a, b) => b.level - a.level);
+                    }
+                } catch (e) {
+                    console.error("Error extracting pets:", e);
+                }
+                
+                // Extract minion slots
+                try {
+                    if (profileData.minion_slots) {
+                        data.minions = profileData.minion_slots;
+                    } else if (memberData.crafted_generators) {
+                        // Approximate minion slots based on unique minions crafted
+                        const uniqueMinions = new Set(memberData.crafted_generators).size;
+                        data.minions = estimateMinionsSlots(uniqueMinions);
+                    }
+                } catch (e) {
+                    console.error("Error extracting minion slots:", e);
+                }
+                
+                // Extract achievements count
+                try {
+                    if (playerData.achievements) {
+                        // Count SkyBlock specific achievements
+                        const skyblockAchievementCount = Object.keys(playerData.achievements)
+                            .filter(key => key.startsWith('skyblock_'))
+                            .length;
+                        data.achievements = skyblockAchievementCount;
+                    }
+                } catch (e) {
+                    console.error("Error extracting achievements:", e);
+                }
+                
+                // Estimate networth (bank + purse is a very basic estimation)
+                data.networth = data.bank + data.purse;
+                
+                // Estimate playtime in hours (this is a very rough estimate)
+                try {
+                    if (memberData.last_save && memberData.first_join) {
+                        const totalTimeMs = memberData.last_save - memberData.first_join;
+                        data.playtime = Math.floor(totalTimeMs / (1000 * 60 * 60)); // Convert to hours
+                    }
+                } catch (e) {
+                    console.error("Error estimating playtime:", e);
+                }
+                
+                return data;
+            }
+            
+            function calculateSweatScore(playerData) {
+                // Default weights for each category
+                const weights = {
+                    skills: 0.30,  // 30% of score
+                    slayer: 0.25,  // 25% of score
+                    dungeons: 0.25, // 25% of score
+                    misc: 0.20     // 20% of score
+                };
+                
+                // Calculate skill score (max level 60 for most skills)
+                const skillLevels = Object.values(playerData.skills);
+                const maxPossibleSkillLevel = 60;
+                const avgSkillLevel = skillLevels.reduce((sum, level) => sum + level, 0) / skillLevels.length;
+                const skillScore = (avgSkillLevel / maxPossibleSkillLevel) * 100;
+                
+                // Calculate slayer score (max level 9)
+                const slayerLevels = Object.values(playerData.slayer);
+                const maxSlayerLevel = 9;
+                const avgSlayerLevel = slayerLevels.reduce((sum, level) => sum + level, 0) / slayerLevels.length;
+                const slayerScore = (avgSlayerLevel / maxSlayerLevel) * 100;
+                
+                // Calculate dungeon score
+                const catacombsScore = (playerData.dungeons.catacombs / 50) * 100; // Max catacombs level is 50
+                const classLevels = [
+                    playerData.dungeons.healer,
+                    playerData.dungeons.mage,
+                    playerData.dungeons.berserk,
+                    playerData.dungeons.archer,
+                    playerData.dungeons.tank
+                ].filter(level => level > 0);
+                
+                const avgClassLevel = classLevels.length > 0 
+                    ? classLevels.reduce((sum, level) => sum + level, 0) / classLevels.length 
+                    : 0;
+                const classScore = (avgClassLevel / 50) * 100;
+                
+                // Calculate secrets score (50000 secrets is a lot)
+                const secretsScore = Math.min(playerData.dungeons.secrets / 50000, 1) * 100;
+                
+                // Calculate F7 completions score (500 completions is a lot)
+                const f7Completions = playerData.dungeons.completions && playerData.dungeons.completions['7'] 
+                    ? playerData.dungeons.completions['7'] 
+                    : 0;
+                const f7Score = Math.min(f7Completions / 500, 1) * 100;
+                
+                // Calculate overall dungeons score
+                const dungeonScore = (catacombsScore * 0.4) + (classScore * 0.2) + (secretsScore * 0.2) + (f7Score * 0.2);
+                
+                // Calculate misc score (pets, minions, achievements, networth)
+                // Pet score (based on average pet level, max around level 100)
+                const petScore = playerData.pets.length > 0 
+                    ? Math.min((playerData.pets.reduce((sum, pet) => sum + pet.level, 0) / playerData.pets.length) / 100, 1) * 100
+                    : 0;
+                
+                // Minion score (max 29 minion slots)
+                const minionScore = (playerData.minions / 29) * 100;
+                
+                // Achievement score (around 40 skyblock achievements)
+                const achievementScore = Math.min(playerData.achievements / 40, 1) * 100;
+                
+                // Networth score (1B coins is very wealthy)
+                const networthScore = Math.min(Math.log10(playerData.networth || 1) / Math.log10(1000000000), 1) * 100;
+                
+                // Overall misc score
+                const miscScore = (petScore * 0.25) + (minionScore * 0.25) + (achievementScore * 0.25) + (networthScore * 0.25);
+                
+                // Calculate final weighted score
+                const finalScore = (skillScore * weights.skills) + 
+                                  (slayerScore * weights.slayer) + 
+                                  (dungeonScore * weights.dungeons) + 
+                                  (miscScore * weights.misc);
+                
+                return Math.max(0, Math.min(100, Math.round(finalScore)));
+            }
+            
+            function displayResults(username, playerData, sweatScore) {
+                // Update player name
+                playerName.textContent = `Player: ${username}`;
+                
+                // Update sweat meter
+                sweatFill.style.width = `${sweatScore}%`;
+                sweatPercentage.textContent = `${sweatScore}% Sweat`;
+                
+                // Clear previous stats
+                skillsContainer.innerHTML = '';
+                slayerContainer.innerHTML = '';
+                dungeonsContainer.innerHTML = '';
+                miscContainer.innerHTML = '';
+                
+                // Add skill stats
+                const skills = playerData.skills;
+                Object.entries(skills).forEach(([skill, level]) => {
+                    addStatCard(`${skill.charAt(0).toUpperCase() + skill.slice(1)}`, `Level ${level}`, skillsContainer);
+                });
+                
+                // Add slayer stats
+                const slayer = playerData.slayer;
+                Object.entries(slayer).forEach(([slayerType, level]) => {
+                    addStatCard(`${slayerType.charAt(0).toUpperCase() + slayerType.slice(1)} Slayer`, `Level ${level}`, slayerContainer);
+                });
+                
+                // Add dungeon stats
+                addStatCard('Catacombs', `Level ${playerData.dungeons.catacombs}`, dungeonsContainer);
+                
+                // Add class levels
+                if (playerData.dungeons.healer > 0) addStatCard('Healer', `Level ${playerData.dungeons.healer}`, dungeonsContainer);
+                if (playerData.dungeons.mage > 0) addStatCard('Mage', `Level ${playerData.dungeons.mage}`, dungeonsContainer);
+                if (playerData.dungeons.berserk > 0) addStatCard('Berserk', `Level ${playerData.dungeons.berserk}`, dungeonsContainer);
+                if (playerData.dungeons.archer > 0) addStatCard('Archer', `Level ${playerData.dungeons.archer}`, dungeonsContainer);
+                if (playerData.dungeons.tank > 0) addStatCard('Tank', `Level ${playerData.dungeons.tank}`, dungeonsContainer);
+                
+                // Add secrets found
+                addStatCard('Secrets Found', playerData.dungeons.secrets.toLocaleString(), dungeonsContainer);
+                
+                // Add F7 completions if available
+                if (playerData.dungeons.completions && playerData.dungeons.completions['7']) {
+                    addStatCard('F7 Completions', playerData.dungeons.completions['7'].toLocaleString(), dungeonsContainer);
+                }
+                
+                // Add misc stats
+                addStatCard('Bank', `${formatCoins(playerData.bank)}`, miscContainer);
+                addStatCard('Purse', `${formatCoins(playerData.purse)}`, miscContainer);
+                addStatCard('Estimated Networth', `${formatCoins(playerData.networth)}`, miscContainer);
+                
+                // Add pet count
+                addStatCard('Pets', playerData.pets.length, miscContainer);
+                
+                // Add minion slots
+                addStatCard('Minion Slots', playerData.minions, miscContainer);
+                
+                // Add achievements
+                addStatCard('Achievements', playerData.achievements, miscContainer);
+                
+                // Show results
+                results.style.display = 'block';
+            }
+            
+            function addStatCard(title, value, container) {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                
+                const titleElement = document.createElement('div');
+                titleElement.className = 'stat-title';
+                titleElement.textContent = title;
+                
+                const valueElement = document.createElement('div');
+                valueElement.className = 'stat-value';
+                valueElement.textContent = value;
+                
+                card.appendChild(titleElement);
+                card.appendChild(valueElement);
+                container.appendChild(card);
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            function hideError() {
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
+            }
+            
+            function formatCoins(coins) {
+                if (coins >= 1000000000) {
+                    return `${(coins / 1000000000).toFixed(2)}B coins`;
+                } else if (coins >= 1000000) {
+                    return `${(coins / 1000000).toFixed(2)}M coins`;
+                } else if (coins >= 1000) {
+                    return `${(coins / 1000).toFixed(2)}K coins`;
+                } else {
+                    return `${coins} coins`;
+                }
+            }
+            
+            // Helper functions for calculating levels
+            function skillExperienceToLevel(exp, skillName) {
+                if (!exp) return 0;
+                
+                // XP required for each skill level
+                const levelRequirements = [
+                    50, 175, 375, 675, 1175, 1925, 2925, 4425, 6425, 9925, // 0-9
+                    14925, 22425, 32425, 47425, 67425, 97425, 147425, 222425, 322425, 522425, // 10-19
+                    822425, 1222425, 1722425, 2322425, 3022425, 3822425, 4722425, 5722425, 6822425, 8022425, // 20-29
+                    9322425, 10722425, 12222425, 13822425, 15522425, 17322425, 19222425, 21222425, 23322425, 25522425, // 30-39
+                    27822425, 30222425, 32722425, 35322425, 38072425, 40972425, 44072425, 47472425, 51172425, 55172425, // 40-49
+                    59472425, 64072425, 68972425, 74172425, 79672425, 85472425, 91572425, 97972425, 104672425, 111672425 // 50-59
+                ];
+                
+                let level = 0;
+                
+                // Special case for runecrafting which has different requirements
+                if (skillName === 'runecrafting') {
+                    const runecraftingRequirements = [
+                        50, 150, 300, 600, 1000, 1500, 2000, 3500, 5000, 7500, // 0-9
+                        10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, 400000, // 10-19
+                        500000, 600000, 700000, 800000, 900000, 1000000 // 20-25
+                    ];
+                    
+                    for (let i = 0; i < runecraftingRequirements.length; i++) {
+                        if (exp >= runecraftingRequirements[i]) {
+                            level = i + 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    return Math.min(level, 25); // Max level 25 for runecrafting
+                }
+                
+                // For all other skills
+                for (let i = 0; i < levelRequirements.length; i++) {
+                    if (exp >= levelRequirements[i]) {
+                        level = i + 1;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return level;
+            }
+            
+            function calculateSlayerLevel(xp) {
+                if (!xp) return 0;
+                
+                // XP required for each slayer level
+                const requirements = [0, 5, 15, 200, 1000, 5000, 20000, 100000, 400000, 1000000];
+                
+                let level = 0;
+                for (let i = 0; i < requirements.length; i++) {
+                    if (xp >= requirements[i]) {
+                        level = i;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return level;
+            }
+            
+            function calculateDungeonLevel(exp) {
+                if (!exp) return 0;
+                
+                // XP required for each dungeon level
+                const requirements = [
+                    50, 75, 110, 160, 230, 330, 470, 670, 950, 1340, // 0-9
+                    1890, 2665, 3760, 5260, 7380, 10300, 14400, 20000, 27600, 38000, // 10-19
+                    52500, 71500, 97000, 132000, 180000, 243000, 328000, 445000, 600000, 800000, // 20-29
+                    1065000, 1410000, 1900000, 2500000, 3300000, 4300000, 5600000, 7200000, 9200000, 12000000, // 30-39
+                    15000000, 19000000, 24000000, 30000000, 38000000, 48000000, 60000000, 75000000, 93000000, 116250000 // 40-49
+                ];
+                
+                let level = 0;
+                for (let i = 0; i < requirements.length; i++) {
+                    if (exp >= requirements[i]) {
+                        level = i + 1;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return level;
+            }
+            
+            function calculatePetLevel(exp, rarity) {
+                if (!exp) return 0;
+                
+                // Different pets have different max levels based on rarity
+                const rarityMultipliers = {
+                    common: 1,
+                    uncommon: 1.5,
+                    rare: 2,
+                    epic: 2.5,
+                    legendary: 3,
+                    mythic: 3.5,
+                    divine: 4
+                };
+                
+                // Base pet XP requirements (per level)
+                const baseRequirements = [
+                    100, 110, 120, 130, 145, 160, 175, 190, 210, 230, // 1-10
+                    250, 275, 300, 330, 360, 400, 440, 490, 540, 600, // 11-20
+                    660, 730, 800, 880, 960, 1050, 1150, 1260, 1380, 1510, // 21-30
+                    1650, 1800, 1960, 2130, 2310, 2500, 2700, 2920, 3160, 3420, // 31-40
+                    3700, 4000, 4350, 4750, 5200, 5700, 6300, 7000, 7800, 8700, // 41-50
+                    9700, 10800, 12000, 13300, 14700, 16200, 17800, 19500, 21300, 23200, // 51-60
+                    25200, 27400, 29800, 32400, 35200, 38200, 41400, 44800, 48400, 52200, // 61-70
+                    56200, 60400, 64800, 69400, 74200, 79200, 84700, 90700, 97200, 104200, // 71-80
+                    111700, 119700, 128200, 137200, 146700, 156700, 167700, 179700, 192700, 206700, // 81-90
+                    221700, 237700, 254700, 272700, 291700, 311700, 333700, 357700, 383700, 411700 // 91-100
+                ];
+                
+                // Calculate total XP required for each level based on rarity
+                const totalRequirements = [];
+                let totalXp = 0;
+                
+                for (let i = 0; i < baseRequirements.length; i++) {
+                    totalXp += Math.floor(baseRequirements[i] * (rarityMultipliers[rarity] || 1));
+                    totalRequirements.push(totalXp);
+                }
+                
+                // Find the level based on exp
+                let level = 0;
+                for (let i = 0; i < totalRequirements.length; i++) {
+                    if (exp >= totalRequirements[i]) {
+                        level = i + 1;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return level;
+            }
+            
+            function estimateMinionsSlots(uniqueMinions) {
+                // Minion slot unlocks based on unique minions
+                const slotRequirements = [5, 15, 30, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550];
+                
+                let slots = 5; // Start with 5 slots
+                for (let i = 0; i < slotRequirements.length; i++) {
+                    if (uniqueMinions >= slotRequirements[i]) {
+                        slots = i + 6; // +6 because we start at 5 and the index starts at 0
+                    } else {
+                        break;
+                    }
+                }
+                
+                return Math.min(slots, 29); // Max slots is 29
+            }
+        });
+    </script>
+</body>
+</html>
